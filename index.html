@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محمود حمادة - كارت شخصي تفاعلي</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* خلفية متحركة */
+.animated-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.floating-shape {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape1 { width: 80px; height: 80px; top: 20%; left: 10%; animation-delay: 0s; }
+.shape2 { width: 120px; height: 120px; top: 60%; left: 80%; animation-delay: 2s; }
+.shape3 { width: 60px; height: 60px; top: 80%; left: 20%; animation-delay: 4s; }
+.shape4 { width: 100px; height: 100px; top: 30%; left: 70%; animation-delay: 1s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+/* الكارت الرئيسي */
+.card-container {
+  perspective: 1000px;
+  width: 400px;
+  height: 600px;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  cursor: pointer;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 25px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.card-front {
+  background: linear-gradient(145deg, #ffffff, #f8f9fa);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-back {
+  background: linear-gradient(145deg, #2c3e50, #34495e);
+  color: white;
+  transform: rotateY(180deg);
+}
+
+/* تأثيرات الإضاءة */
+.card-face::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    transparent 30%, 
+    rgba(255, 255, 255, 0.1) 50%, 
+    transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.card:hover .card-face::before {
+  opacity: 1;
+}
+
+/* الصورة الشخصية */
+.profile-section {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+.photo-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.photo {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  color: white;
+}
+
+.photo:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  border-radius: 50%;
+  border: 3px solid white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+/* معلومات شخصية */
+.info-section {
+  width: 100%;
+  flex-grow: 1;
+}
+
+.name {
+  font-size: 28px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  font-size: 16px;
+  color: #7f8c8d;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  margin: 12px 0;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 15px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.contact-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  transform: translateX(-5px);
+}
+
+.contact-icon {
+  width: 24px;
+  height: 24px;
+  margin-left: 15px;
+  color: #667eea;
+  font-size: 18px;
+}
+
+.contact-text {
+  flex-grow: 1;
+  text-align: right;
+  font-size: 14px;
+  color: #34495e;
+}
+
+/* QR Code الخلفي */
+.qr-section {
+  text-align: center;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.qr-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #ecf0f1;
+}
+
+#qrcode {
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+  background: white;
+  padding: 10px;
+}
+
+/* الأزرار */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.btn-primary {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* زر التبديل */
+.flip-indicator {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px;
+  color: #667eea;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-3px); }
+}
+
+.flip-indicator:hover {
+  background: #667eea;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* الإشعارات */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  transform: translateX(300px);
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+/* التصميم المتجاوب */
+@media (max-width: 480px) {
+  .card-container {
+    width: 350px;
+    height: 550px;
+  }
+  
+  .card-face {
+    padding: 20px;
+  }
+  
+  .photo {
+    width: 120px;
+    height: 120px;
+    font-size: 50px;
+  }
+  
+  .name {
+    font-size: 24px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+
+/* تأثيرات إضافية */
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  animation: sparkle 2s linear infinite;
+}
+
+@keyframes sparkle {
+  0% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0); }
+}
+
+/* لودر QR */
+.qr-loader {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<!-- خلفية متحركة -->
+<div class="animated-bg">
+  <div class="floating-shape shape1"></div>
+  <div class="floating-shape shape2"></div>
+  <div class="floating-shape shape3"></div>
+  <div class="floating-shape shape4"></div>
+</div>
+
+<!-- الكارت الرئيسي -->
+<div class="card-container">
+  <div class="card" id="businessCard">
+    <!-- الوجه الأمامي -->
+    <div class="card-face card-front">
+      <div class="profile-section">
+        <div class="photo-container">
+          <div class="photo" id="userPhoto">م.ح</div>
+          <div class="online-indicator"></div>
+        </div>
+      </div>
+      
+      <div class="info-section">
+        <h2 class="name">محمود حمادة</h2>
+        <p class="title">مطور تطبيقات ومواقع</p>
+        
+        <div class="contact-item" onclick="callPhone('01012345678')">
+          <div class="contact-icon">📞</div>
+          <div class="contact-text">01012345678</div>
+        </div>
+        
+        <div class="contact-item" onclick="sendEmail('mahmoud@example.com')">
+          <div class="contact-icon">📧</div>
+          <div class="contact-text">mahmoud@example.com</div>
+        </div>
+        
+        <div class="contact-item">
+          <div class="contact-icon">🎂</div>
+          <div class="contact-text">10 مايو 2002</div>
+        </div>
+        
+        <div class="contact-item" onclick="openLocation()">
+          <div class="contact-icon">📍</div>
+          <div class="contact-text">سوهاج، مصر</div>
+        </div>
+        
+        <div class="contact-item" onclick="openWebsite()">
+          <div class="contact-icon">🌐</div>
+          <div class="contact-text">www.mahmoud-dev.com</div>
+        </div>
+      </div>
+      
+      <div class="flip-indicator" onclick="flipCard()" title="اضغط لرؤية QR Code">
+        🔄
+      </div>
+    </div>
+    
+    <!-- الوجه الخلفي -->
+    <div class="card-face card-back">
+      <div class="qr-section">
+        <h3 class="qr-title">امسح الكود للحفظ</h3>
+        <div class="qr-loader" id="qrLoader"></div>
+        <canvas id="qrcode"></canvas>
+        
+        <div class="action-buttons">
+          <button class="btn btn-primary" onclick="downloadQR()">
+            💾 تحميل QR
+          </button>
+          <button class="btn btn-secondary" onclick="shareCard()">
+            📤 مشاركة
+          </button>
+        </div>
+        
+        <a href="#" class="btn btn-secondary" onclick="downloadCV()" style="margin-top: 10px;">
+          📄 السيرة الذاتية
+        </a>
+      </div>
+      
+      <div class="flip-indicator" onclick="flipCard()" title="العودة للمعلومات">
+        ↩️
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- الإشعارات -->
+<div class="notification" id="notification"></div>
+
+<script>
+// بيانات المستخدم
+const userData = {
+  fullName: "محمود حمادة",
+  phone: "01012345678",
+  email: "mahmoud@example.com",
+  birthday: "2002-05-10",
+  location: "سوهاج، مصر",
+  website: "www.mahmoud-dev.com",
+  title: "مطور تطبيقات ومواقع"
+};
+
+// مولد QR بدون مكتبات خارجية
+class SimpleQR {
+  constructor() {
+    this.modules = [];
+    this.moduleCount = 0;
+  }
+  
+  generate(text, size = 250) {
+    // هنا سنستخدم طريقة مبسطة لتوليد QR
+    // في التطبيق الحقيقي، يمكن استخدام مكتبة QR محلية
+    const canvas = document.getElementById('qrcode');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = size;
+    canvas.height = size;
+    
+    // رسم خلفية بيضاء
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+    
+    // رسم نمط QR مبسط
+    ctx.fillStyle = '#000000';
+    const moduleSize = size / 25;
+    
+    // رسم الزوايا الثلاث
+    this.drawFinderPattern(ctx, 0, 0, moduleSize);
+    this.drawFinderPattern(ctx, 18 * moduleSize, 0, moduleSize);
+    this.drawFinderPattern(ctx, 0, 18 * moduleSize, moduleSize);
+    
+    // رسم نمط البيانات (مبسط)
+    for (let i = 0; i < 25; i++) {
+      for (let j = 0; j < 25; j++) {
+        if (this.shouldFillModule(i, j, text)) {
+          ctx.fillRect(i * moduleSize, j * moduleSize, moduleSize, moduleSize);
+        }
+      }
+    }
+    
+    // إضافة لوجو في الوسط
+    this.drawLogo(ctx, size);
+  }
+  
+  drawFinderPattern(ctx, x, y, moduleSize) {
+    // رسم المربع الخارجي
+    ctx.fillRect(x, y, 7 * moduleSize, 7 * moduleSize);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x + moduleSize, y + moduleSize, 5 * moduleSize, 5 * moduleSize);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x + 2 * moduleSize, y + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
+  }
+  
+  shouldFillModule(x, y, text) {
+    // تجنب الزوايا
+    if ((x < 9 && y < 9) || (x > 15 && y < 9) || (x < 9 && y > 15)) {
+      return false;
+    }
+    
+    // نمط مبسط بناءً على النص
+    const hash = this.simpleHash(text);
+    return (x + y + hash) % 3 === 0;
+  }
+  
+  simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash);
+  }
+  
+  drawLogo(ctx, size) {
+    const logoSize = size * 0.15;
+    const x = (size - logoSize) / 2;
+    const y = (size - logoSize) / 2;
+    
+    // رسم دائرة بيضاء للخلفية
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(size/2, size/2, logoSize/2 + 5, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // رسم الحروف الأولى
+    ctx.fillStyle = '#667eea';
+    ctx.font = `bold ${logoSize/2}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.fillText('م.ح', size/2, size/2 + logoSize/6);
+  }
+}
+
+// إنشاء مولد QR
+const qrGenerator = new SimpleQR();
+
+// توليد vCard
+function generateVCard() {
+  return `BEGIN:VCARD
+VERSION:3.0
+FN:${userData.fullName}
+TEL:${userData.phone}
+EMAIL:${userData.email}
+BDAY:${userData.birthday}
+ADR:;;${userData.location};;;;
+URL:${userData.website}
+TITLE:${userData.title}
+END:VCARD`;
+}
+
+// تهيئة QR Code
+function initQR() {
+  const vcard = generateVCard();
+  qrGenerator.generate(vcard, 200);
+}
+
+// قلب الكارت
+function flipCard() {
+  const card = document.getElementById('businessCard');
+  card.classList.toggle('flipped');
+  
+  // توليد QR عند القلب لأول مرة
+  if (card.classList.contains('flipped') && !document.getElementById('qrcode').innerHTML) {
+    setTimeout(() => {
+      initQR();
+    }, 400);
+  }
+}
+
+// الإشعارات
+function showNotification(message, type = 'success') {
+  const notification = document.getElementById('notification');
+  notification.textContent = message;
+  notification.className = `notification show ${type}`;
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 3000);
+}
+
+// الاتصال
+function callPhone(phone) {
+  if (navigator.userAgent.match(/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i)) {
+    window.location.href = `tel:${phone}`;
+  } else {
+    navigator.clipboard.writeText(phone).then(() => {
+      showNotification('تم نسخ رقم الهاتف');
+    });
+  }
+}
+
+// إرسال إيميل
+function sendEmail(email) {
+  window.location.href = `mailto:${email}`;
+}
+
+// فتح الموقع
+function openWebsite() {
+  window.open(`https://${userData.website}`, '_blank');
+}
+
+// فتح الموقع الجغرافي
+function openLocation() {
+  const location = encodeURIComponent(userData.location);
+  window.open(`https://maps.google.com/maps?q=${location}`, '_blank');
+}
+
+// تحميل QR
+function downloadQR() {
+  const canvas = document.getElementById('qrcode');
+  const link = document.createElement('a');
+  link.download = 'mahmoud_qr_code.png';
+  link.href = canvas.toDataURL();
+  link.click();
+  showNotification('تم تحميل QR Code');
+}
+
+// مشاركة الكارت
+async function shareCard() {
+  const canvas = document.getElementById('qrcode');
+  
+  if (navigator.share) {
+    try {
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'business_card.png', { type: 'image/png' });
+        await navigator.share({
+          title: 'كارت محمود حمادة',
+          text: 'معلومات التواصل',
+          files: [file]
+        });
+      });
+    } catch (error) {
+      fallbackShare();
+    }
+  } else {
+    fallbackShare();
+  }
+}
+
+function fallbackShare() {
+  const vcard = generateVCard();
+  navigator.clipboard.writeText(vcard).then(() => {
+    showNotification('تم نسخ معلومات الكارت');
+  });
+}
+
+// تحميل السيرة الذاتية
+function downloadCV() {
+  // محاكاة تحميل CV
+  showNotification('جاري تحميل السيرة الذاتية...');
+  
+  // يمكنك هنا إضافة رابط حقيقي لملف PDF
+  setTimeout(() => {
+    showNotification('تم التحميل بنجاح');
+  }, 2000);
+}
+
+// إضافة التأثيرات البصرية
+function addSparkles() {
+  const card = document.querySelector('.card-front');
+  
+  setInterval(() => {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    sparkle.style.left = Math.random() * 100 + '%';
+    sparkle.style.top = Math.random() * 100 + '%';
+    sparkle.style.animationDelay = Math.random() * 2 + 's';
+    
+    card.appendChild(sparkle);
+    
+    setTimeout(() => {
+      sparkle.remove();
+    }, 2000);
+  }, 3000);
+}
+
+// تهيئة التطبيق
+document.addEventListener('DOMContentLoaded', function() {
+  // إضافة تأثيرات بصرية
+  addSparkles();
+  
+  // تحسين الأداء للموبايل
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('data:text/javascript,');
+  }
+  
+  // إضافة اختصارات لوحة المفاتيح
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' || e.key === 'ف') {
+      flipCard();
+    }
+    if (e.key === 'd' || e.key === 'د') {
+      downloadQR();
+    }
+  });
+  
+  // تفعيل اللمس للموبايل
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  document.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+  
+  document.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    if (Math.abs(touchEndX - touchStartX) > 50) {
+      flipCard();
+    }
+  });
+  
+  showNotification('مرحباً! اضغط على الكارت لرؤية QR Code');
+});
+
+// تحسين الأداء
+function optimizePerformance() {
+  // تأجيل تحميل المحتوى غير الضروري
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // تحميل المحتوى عند الحاجة
+        initQR();
+        observer.disconnect();
+      }
+    });
+  });
+  
+  observer.observe(document.querySelector('.card-back'));
+}
+
+// تشغيل التحسينات
+optimizePerformance();
+</script>
+
+</body>
+</html>
