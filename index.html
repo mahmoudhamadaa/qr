@@ -465,6 +465,7 @@ body {
 #qrcode {
   display: block;
   margin: 0 auto;
+  min-height: 200px;
 }
 
 .qr-loader {
@@ -857,7 +858,7 @@ body {
         
         <div class="qr-container">
           <div class="qr-loader" id="qrLoader" style="display: none;"></div>
-          <canvas id="qrcode" width="200" height="200"></canvas>
+          <div id="qrcode"></div>
         </div>
         
         <div class="action-buttons">
@@ -890,6 +891,9 @@ body {
 <!-- الإشعارات -->
 <div class="notification" id="notification"></div>
 
+<!-- مكتبة QR Code من CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
 <script>
 // بيانات المستخدم المتطورة
 const userData = {
@@ -897,11 +901,11 @@ const userData = {
   title: "Programmer Web",
   phones: [
     { number: "01069715039", label: "الهاتف الرئيسي", type: "primary", status: "متاح الآن" },
-    { number: "01004932923", label: "هاتف ثانوي", type: "secondary", status: "للطوارئ" },
+    { number: "01004932823", label: "هاتف ثانوي", type: "secondary", status: "للطوارئ" },
     { number: "01149803158", label: "هاتف العمل", type: "work", status: "أوقات العمل" }
   ],
   email: "mahmoud.m.a.1358@gmail.com",
-  birthday: "2002-05-06",
+  birthday: "2002-05-10",
   location: "سوهاج، مصر",
   website: "mahmoudhamadaa.github.io/profile/",
   whatsapp: "01069715039",
@@ -920,169 +924,27 @@ let stats = {
 
 // متغير لتتبع حالة توليد QR
 let qrGenerated = false;
+let qrCodeInstance;
 
-// مولد QR محسن يعمل بدون انترنت
-function generateSimpleQR(text, canvas) {
-  const ctx = canvas.getContext('2d');
-  const size = 200;
-  const moduleSize = size / 25; // 25x25 وحدة
-  
-  canvas.width = size;
-  canvas.height = size;
-  
-  // رسم الخلفية البيضاء
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, size, size);
-  
-  // إنشاء نمط QR مبسط
-  ctx.fillStyle = '#000000';
-  
-  // رسم الزوايا الثلاث (Finder Patterns)
-  drawFinderPattern(ctx, 0, 0, moduleSize);
-  drawFinderPattern(ctx, 18 * moduleSize, 0, moduleSize);
-  drawFinderPattern(ctx, 0, 18 * moduleSize, moduleSize);
-  
-  // رسم خطوط التوقيت
-  drawTimingPatterns(ctx, moduleSize);
-  
-  // رسم البيانات بناءً على النص
-  drawDataModules(ctx, text, moduleSize);
-  
-  // رسم اللوجو في المنتصف
-  drawCenterLogo(ctx, size);
-}
-
-// رسم نمط المحاذاة في الزوايا
-function drawFinderPattern(ctx, x, y, moduleSize) {
-  // المربع الخارجي 7x7
-  ctx.fillRect(x, y, 7 * moduleSize, 7 * moduleSize);
-  
-  // المربع الأبيض الداخلي 5x5
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x + moduleSize, y + moduleSize, 5 * moduleSize, 5 * moduleSize);
-  
-  // المربع الأسود المركزي 3x3
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(x + 2 * moduleSize, y + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
-}
-
-// رسم خطوط التوقيت
-function drawTimingPatterns(ctx, moduleSize) {
-  ctx.fillStyle = '#000000';
-  
-  // خط أفقي
-  for (let i = 8; i < 17; i++) {
-    if (i % 2 === 0) {
-      ctx.fillRect(i * moduleSize, 6 * moduleSize, moduleSize, moduleSize);
-    }
-  }
-  
-  // خط عمودي
-  for (let i = 8; i < 17; i++) {
-    if (i % 2 === 0) {
-      ctx.fillRect(6 * moduleSize, i * moduleSize, moduleSize, moduleSize);
-    }
-  }
-}
-
-// رسم وحدات البيانات
-function drawDataModules(ctx, text, moduleSize) {
-  ctx.fillStyle = '#000000';
-  
-  // تحويل النص لـ hash بسيط
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = ((hash << 5) - hash + text.charCodeAt(i)) & 0xffffffff;
-  }
-  hash = Math.abs(hash);
-  
-  // رسم النمط
-  for (let row = 0; row < 25; row++) {
-    for (let col = 0; col < 25; col++) {
-      // تجنب مناطق المحاذاة
-      if (isReservedArea(row, col)) continue;
-      
-      // تجنب منطقة اللوجو
-      if (row >= 10 && row <= 14 && col >= 10 && col <= 14) continue;
-      
-      // تحديد ما إذا كانت الوحدة ممتلئة
-      const pattern = (row + col + hash) % 3 === 0 || 
-                     ((row * col + hash) % 5 === 0) ||
-                     (row % 2 === 0 && col % 3 === 0 && hash % 7 === 0);
-      
-      if (pattern) {
-        ctx.fillRect(col * moduleSize, row * moduleSize, moduleSize, moduleSize);
-      }
-    }
-  }
-}
-
-// تحديد المناطق المحجوزة
-function isReservedArea(row, col) {
-  // زوايا المحاذاة
-  if ((row < 9 && col < 9) || 
-      (row < 9 && col > 15) || 
-      (row > 15 && col < 9)) {
-    return true;
-  }
-  
-  // خطوط التوقيت
-  if (row === 6 || col === 6) {
-    return true;
-  }
-  
-  return false;
-}
-
-// رسم اللوجو المركزي
-function drawCenterLogo(ctx, canvasSize) {
-  const centerX = canvasSize / 2;
-  const centerY = canvasSize / 2;
-  const logoSize = 40;
-  
-  // خلفية بيضاء دائرية
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, logoSize/2 + 6, 0, 2 * Math.PI);
-  ctx.fill();
-  
-  // إطار ملون
-  const gradient = ctx.createLinearGradient(centerX - logoSize/2, centerY - logoSize/2, 
-                                           centerX + logoSize/2, centerY + logoSize/2);
-  gradient.addColorStop(0, '#667eea');
-  gradient.addColorStop(0.5, '#764ba2');
-  gradient.addColorStop(1, '#f093fb');
-  ctx.strokeStyle = gradient;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, logoSize/2 + 3, 0, 2 * Math.PI);
-  ctx.stroke();
-  
-  // النص المركzي
-  ctx.fillStyle = '#2c3e50';
-  ctx.font = 'bold 18px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('م.ح', centerX, centerY);
-}
-
-// توليد vCard
+// توليد vCard محسن
 function generateVCard() {
   let phonesVCard = '';
   userData.phones.forEach((phone) => {
-    phonesVCard += `TEL;TYPE=${phone.type.toUpperCase()}:${phone.number}\n`;
+    phonesVCard += `TEL;TYPE=${phone.type.toUpperCase()}:+2${phone.number}\n`;
   });
   
   return `BEGIN:VCARD
 VERSION:3.0
 FN:${userData.fullName}
+N:حمادة;محمود;;;
 TITLE:${userData.title}
 ORG:${userData.company}
 ${phonesVCard}EMAIL:${userData.email}
 URL:https://${userData.website}
 ADR:;;${userData.location};;;;
 BDAY:${userData.birthday}
-NOTE:تطوير تطبيقات ومواقع احترافية - WhatsApp: ${userData.whatsapp}
+NOTE:مطور ويب محترف - تطوير تطبيقات ومواقع احترافية\\nWhatsApp: +2${userData.whatsapp}\\nLinkedIn: ${userData.linkedin}\\nFacebook: ${userData.facebook}\\nInstagram: ${userData.instagram}
+REV:${new Date().toISOString()}
 END:VCARD`;
 }
 
@@ -1095,37 +957,120 @@ function flipCard() {
   
   // إذا تم قلب الكارت للخلف وQR لم يتم توليده بعد
   if (!isFlipping && !qrGenerated) {
-    generateQRCode();
+    setTimeout(() => {
+      generateQRCode();
+    }, 400); // تأخير قليل لانتظار انتهاء الانيميشن
   }
   
   // تحديث الإحصائيات
   stats.views++;
   updateStats();
   
-  // صوت القلب (محاكاة)
+  // تأثير صوتي (محاكاة)
   console.log('🔊 Card flipped');
 }
 
-// توليد QR Code
+// توليد QR Code باستخدام مكتبة QRious
 function generateQRCode() {
   const loader = document.getElementById('qrLoader');
-  const canvas = document.getElementById('qrcode');
+  const qrContainer = document.getElementById('qrcode');
   
   // إظهار التحميل
   loader.style.display = 'block';
-  canvas.style.opacity = '0.5';
+  qrContainer.innerHTML = '';
   
-  setTimeout(() => {
-    const vcard = generateVCard();
-    generateSimpleQR(vcard, canvas);
+  try {
+    setTimeout(() => {
+      const vcard = generateVCard();
+      
+      // إنشاء canvas جديد
+      const canvas = document.createElement('canvas');
+      qrContainer.appendChild(canvas);
+      
+      // توليد QR Code باستخدام QRious
+      qrCodeInstance = new QRious({
+        element: canvas,
+        value: vcard,
+        size: 200,
+        level: 'M', // مستوى تصحيح الأخطاء
+        background: '#ffffff',
+        foreground: '#2c3e50',
+        padding: 10
+      });
+      
+      // إخفاء التحميل
+      loader.style.display = 'none';
+      
+      // تأثير ظهور
+      canvas.style.opacity = '0';
+      canvas.style.transform = 'scale(0.8)';
+      canvas.style.transition = 'all 0.5s ease';
+      
+      setTimeout(() => {
+        canvas.style.opacity = '1';
+        canvas.style.transform = 'scale(1)';
+      }, 100);
+      
+      qrGenerated = true;
+      showNotification('تم توليد QR Code بنجاح! 🎯', 'success');
+      
+      // إضافة تأثير نبضة
+      canvas.addEventListener('mouseenter', () => {
+        canvas.style.transform = 'scale(1.05)';
+      });
+      
+      canvas.addEventListener('mouseleave', () => {
+        canvas.style.transform = 'scale(1)';
+      });
+      
+    }, 800);
     
-    // إخفاء التحميل
+  } catch (error) {
+    console.error('خطأ في توليد QR Code:', error);
     loader.style.display = 'none';
-    canvas.style.opacity = '1';
     
-    qrGenerated = true;
-    showNotification('تم توليد QR Code بنجاح! 🎯', 'success');
-  }, 1000);
+    // Fallback: إنشاء QR بسيط
+    generateFallbackQR();
+  }
+}
+
+// QR Code احتياطي في حالة فشل المكتبة
+function generateFallbackQR() {
+  const qrContainer = document.getElementById('qrcode');
+  qrContainer.innerHTML = `
+    <div style="
+      width: 200px; 
+      height: 200px; 
+      background: white; 
+      border: 2px solid #2c3e50; 
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial;
+      text-align: center;
+      padding: 20px;
+      box-sizing: border-box;
+    ">
+      <div style="font-size: 40px; margin-bottom: 10px;">📱</div>
+      <div style="font-size: 16px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;">
+        ${userData.fullName}
+      </div>
+      <div style="font-size: 12px; color: #666; margin-bottom: 15px;">
+        ${userData.title}
+      </div>
+      <div style="font-size: 14px; font-weight: bold; color: #667eea;">
+        ${userData.phones[0].number}
+      </div>
+      <div style="font-size: 10px; color: #999; margin-top: 10px;">
+        اتصل أو احفظ الرقم
+      </div>
+    </div>
+  `;
+  
+  qrGenerated = true;
+  showNotification('تم إنشاء كود بديل للاتصال 📞', 'info');
 }
 
 // تحديث الإحصائيات
@@ -1158,7 +1103,7 @@ function callPhone(phone, type) {
   updateStats();
   
   if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-    window.location.href = `tel:${phone}`;
+    window.location.href = `tel:+2${phone}`;
     showNotification(`جاري الاتصال بـ ${phone}`, 'success');
   } else {
     navigator.clipboard.writeText(phone).then(() => {
@@ -1185,8 +1130,8 @@ function animatePhoneClick(phone) {
 }
 
 function sendWhatsApp() {
-  const message = encodeURIComponent(`السلام عليكم، وصلني الكارت الشخصي الخاص بك`);
-  window.open(`https://wa.me/${userData.whatsapp}?text=${message}`, '_blank');
+  const message = encodeURIComponent(`السلام عليكم، وصلني الكارت الشخصي الخاص بك وأود التواصل معك`);
+  window.open(`https://wa.me/2${userData.whatsapp}?text=${message}`, '_blank');
   showNotification('تم فتح واتساب', 'success');
   stats.contacts++;
   updateStats();
@@ -1239,26 +1184,44 @@ function openLocation() {
 
 // وظائف التحميل والمشاركة
 function downloadQR() {
-  const canvas = document.getElementById('qrcode');
-  
   if (!qrGenerated) {
     showNotification('يرجى قلب الكارت أولاً لتوليد QR Code', 'error');
     return;
   }
   
   try {
-    canvas.toBlob((blob) => {
-      const link = document.createElement('a');
-      link.download = `${userData.fullName.replace(/\s+/g, '_')}_QR_Code.png`;
-      link.href = URL.createObjectURL(blob);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-      showNotification('تم تحميل QR Code بنجاح! 📱', 'success');
-    }, 'image/png', 1.0);
+    const canvas = document.querySelector('#qrcode canvas');
+    if (canvas) {
+      canvas.toBlob((blob) => {
+        const link = document.createElement('a');
+        link.download = `${userData.fullName.replace(/\s+/g, '_')}_QR_Code.png`;
+        link.href = URL.createObjectURL(blob);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        showNotification('تم تحميل QR Code بنجاح! 📱', 'success');
+      }, 'image/png', 1.0);
+    } else {
+      // تحميل الكود البديل كصورة
+      html2canvas(document.getElementById('qrcode')).then(canvas => {
+        canvas.toBlob((blob) => {
+          const link = document.createElement('a');
+          link.download = `${userData.fullName.replace(/\s+/g, '_')}_Contact_Card.png`;
+          link.href = URL.createObjectURL(blob);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+          showNotification('تم تحميل كارت الاتصال! 📱', 'success');
+        });
+      }).catch(() => {
+        showNotification('استخدم لقطة شاشة لحفظ الكود', 'info');
+      });
+    }
   } catch (error) {
-    showNotification('فشل في تحميل QR Code', 'error');
+    console.error('خطأ في التحميل:', error);
+    showNotification('استخدم لقطة شاشة لحفظ الكود', 'info');
   }
 }
 
@@ -1275,45 +1238,37 @@ function downloadVCard() {
     URL.revokeObjectURL(link.href);
     showNotification('تم تحميل معلومات الاتصال! 📇', 'success');
   } catch (error) {
+    console.error('خطأ في تحميل vCard:', error);
     showNotification('فشل في تحميل vCard', 'error');
   }
 }
 
 async function shareCard() {
-  const canvas = document.getElementById('qrcode');
-  
-  if (!qrGenerated) {
-    showNotification('يرجى قلب الكارت أولاً لتوليد QR Code', 'error');
-    return;
-  }
-  
   const shareText = `🔷 ${userData.fullName}
 ${userData.title}
 
-📱 ${userData.phones[0].number}
+📱 الهاتف الرئيسي: ${userData.phones[0].number}
+☎️ هاتف ثانوي: ${userData.phones[1].number}
+💼 هاتف العمل: ${userData.phones[2].number}
+
 📧 ${userData.email}
 🌐 ${userData.website}
 📍 ${userData.location}
 
-${window.location.href}`;
+🔗 ${window.location.href}`;
   
   if (navigator.share) {
     try {
-      canvas.toBlob(async (blob) => {
-        try {
-          const file = new File([blob], 'business_card_qr.png', { type: 'image/png' });
-          await navigator.share({
-            title: `كارت ${userData.fullName}`,
-            text: shareText,
-            files: [file]
-          });
-          showNotification('تمت المشاركة بنجاح! 📤', 'success');
-        } catch (shareError) {
-          fallbackShare(shareText);
-        }
+      await navigator.share({
+        title: `كارت ${userData.fullName}`,
+        text: shareText,
+        url: window.location.href
       });
-    } catch (error) {
-      fallbackShare(shareText);
+      showNotification('تمت المشاركة بنجاح! 📤', 'success');
+    } catch (shareError) {
+      if (shareError.name !== 'AbortError') {
+        fallbackShare(shareText);
+      }
     }
   } else {
     fallbackShare(shareText);
@@ -1336,17 +1291,30 @@ function downloadCV() {
   showNotification('جاري تحضير السيرة الذاتية... ⏳', 'info', 2000);
   
   setTimeout(() => {
-    // محاكاة تحميل CV
-    const cvData = `سيرة ذاتية - ${userData.fullName}
-${userData.title}
+    const cvData = `السيرة الذاتية - ${userData.fullName}
+====================================
+
+المعلومات الشخصية:
+الاسم: ${userData.fullName}
+المهنة: ${userData.title}
+الشركة: ${userData.company}
+تاريخ الميلاد: ${userData.birthday}
+العنوان: ${userData.location}
 
 معلومات الاتصال:
 ${userData.phones.map(p => `${p.label}: ${p.number}`).join('\n')}
 البريد الإلكتروني: ${userData.email}
 الموقع الإلكتروني: ${userData.website}
-العنوان: ${userData.location}
+واتساب: ${userData.whatsapp}
 
-تاريخ الميلاد: ${userData.birthday}`;
+وسائل التواصل الاجتماعي:
+LinkedIn: linkedin.com/in/${userData.linkedin}
+Facebook: facebook.com/${userData.facebook}
+Instagram: instagram.com/${userData.instagram}
+
+====================================
+تم إنشاء هذه السيرة الذاتية من الكارت الشخصي التفاعلي
+${window.location.href}`;
     
     const blob = new Blob([cvData], { type: 'text/plain;charset=utf-8' });
     const link = document.createElement('a');
@@ -1365,7 +1333,7 @@ function createParticles() {
   const particles = document.getElementById('particles');
   
   setInterval(() => {
-    if (particles.children.length < 20) { // حد أقصى للجسيمات
+    if (particles.children.length < 15) { // تقليل عدد الجسيمات لتحسين الأداء
       const particle = document.createElement('div');
       particle.className = 'particle';
       particle.style.left = Math.random() * 100 + '%';
@@ -1380,7 +1348,7 @@ function createParticles() {
         }
       }, 6000);
     }
-  }, 800);
+  }, 1200); // تقليل معدل إنشاء الجسيمات
 }
 
 // اختصارات لوحة المفاتيح
@@ -1442,7 +1410,7 @@ function setupTouchControls() {
     const deltaY = Math.abs(touchEndY - touchStartY);
     
     // السحب الأفقي للقلب
-    if (deltaX > 50 && deltaX > deltaY) {
+    if (deltaX > 80 && deltaX > deltaY) {
       flipCard();
     }
   }, { passive: true });
@@ -1452,8 +1420,8 @@ function setupTouchControls() {
 document.addEventListener('DOMContentLoaded', function() {
   // رسالة ترحيب
   setTimeout(() => {
-    showNotification('مرحباً! اضغط على 🔄 أو F لقلب الكارت وتوليد QR Code 🎯', 'info', 5000);
-  }, 500);
+    showNotification('مرحباً بك! اضغط 🔄 أو F لقلب الكارت وتوليد QR Code 🎯', 'info', 4000);
+  }, 800);
   
   // تهيئة الوظائف
   createParticles();
@@ -1464,29 +1432,49 @@ document.addEventListener('DOMContentLoaded', function() {
   stats.views = 1;
   updateStats();
   
-  // تأثير الدخول
+  // تأثير الدخول المتطور
   const cardContainer = document.querySelector('.card-container');
   cardContainer.style.opacity = '0';
-  cardContainer.style.transform = 'translateY(50px) rotateX(10deg)';
+  cardContainer.style.transform = 'translateY(50px) rotateX(10deg) scale(0.9)';
   
   setTimeout(() => {
-    cardContainer.style.transition = 'all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    cardContainer.style.transition = 'all 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
     cardContainer.style.opacity = '1';
-    cardContainer.style.transform = 'translateY(0) rotateX(0)';
-  }, 100);
+    cardContainer.style.transform = 'translateY(0) rotateX(0) scale(1)';
+  }, 200);
   
-  console.log('✅ Business Card Loaded Successfully - Ready to work offline!');
+  // تحقق من توفر مكتبة QRious
+  if (typeof QRious === 'undefined') {
+    console.warn('⚠️ QRious library not loaded, using fallback QR generator');
+  } else {
+    console.log('✅ QRious library loaded successfully');
+  }
+  
+  console.log('✅ Business Card Loaded Successfully - Enhanced QR Code Ready!');
 });
 
-// معالجة الأخطاء
+// معالجة الأخطاء المحسنة
 window.addEventListener('error', (e) => {
   console.error('❌ Error:', e.error);
-  showNotification('حدث خطأ، ولكن التطبيق يعمل!', 'error');
+  showNotification('حدث خطأ بسيط، ولكن التطبيق يعمل بشكل طبيعي!', 'info');
 });
 
 // تأكد من أن كل شيء يعمل بدون انترنت
-window.addEventListener('online', () => showNotification('تم الاتصال بالإنترنت', 'success'));
-window.addEventListener('offline', () => showNotification('التطبيق يعمل بدون انترنت!', 'info'));
+window.addEventListener('online', () => {
+  showNotification('تم الاتصال بالإنترنت - جميع الميزات متاحة', 'success');
+});
+
+window.addEventListener('offline', () => {
+  showNotification('التطبيق يعمل بدون انترنت! جميع الوظائف متاحة', 'info');
+});
+
+// تحسين الأداء
+window.addEventListener('beforeunload', () => {
+  // تنظيف الموارد
+  if (qrCodeInstance) {
+    qrCodeInstance = null;
+  }
+});
 </script>
 
 </body>
