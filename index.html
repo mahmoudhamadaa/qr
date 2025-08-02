@@ -32,6 +32,7 @@ body {
   padding: 20px;
   position: relative;
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* خلفية متحركة متقدمة */
@@ -82,7 +83,8 @@ body {
 .card-container {
   perspective: 1500px;
   width: 420px;
-  height: 680px;
+  height: auto;
+  min-height: 680px;
   position: relative;
 }
 
@@ -102,14 +104,16 @@ body {
 .card-face {
   position: absolute;
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   backface-visibility: hidden;
   border-radius: 30px;
   padding: 40px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   box-shadow: 
@@ -630,13 +634,20 @@ body {
 
 /* التصميم المتجاوب المتقدم */
 @media (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+  
   .card-container {
     width: 380px;
-    height: 650px;
+    height: auto;
+    min-height: 650px;
   }
   
   .card-face {
     padding: 30px;
+    height: auto;
+    min-height: 650px;
   }
   
   .photo {
@@ -660,6 +671,10 @@ body {
   .phone-item,
   .contact-item {
     padding: 12px;
+  }
+  
+  .contact-grid {
+    gap: 8px;
   }
 }
 
@@ -811,6 +826,16 @@ body {
             <div class="contact-text">www.mahmoud-dev.com</div>
           </div>
           
+          <div class="contact-item" onclick="openFacebook()">
+            <div class="contact-icon">📘</div>
+            <div class="contact-text">فيس بوك</div>
+          </div>
+          
+          <div class="contact-item" onclick="openInstagram()">
+            <div class="contact-icon">📷</div>
+            <div class="contact-text">إنستجرام</div>
+          </div>
+          
           <div class="contact-item" onclick="openLinkedIn()">
             <div class="contact-icon">💼</div>
             <div class="contact-text">LinkedIn</div>
@@ -884,6 +909,8 @@ const userData = {
   website: "www.mahmoud-dev.com",
   whatsapp: "01012345678",
   linkedin: "mahmoud-hamada-dev",
+  facebook: "mahmoud.hamada.dev",
+  instagram: "mahmoud_dev",
   company: "شركة التطوير المتقدم"
 };
 
@@ -894,168 +921,223 @@ let stats = {
   qrScans: 0
 };
 
-// مولد QR متطور
-class AdvancedQR {
+// مولد QR محلي بالكامل (بدون إنترنت)
+class LocalQRGenerator {
   constructor() {
+    this.size = 21; // حجم المصفوفة الأساسي
     this.modules = [];
-    this.moduleCount = 0;
+    this.reserved = [];
   }
   
-  generate(text, size = 220) {
+  generate(text, canvasSize = 220) {
     const canvas = document.getElementById('qrcode');
     const ctx = canvas.getContext('2d');
     
-    canvas.width = size;
-    canvas.height = size;
+    canvas.width = canvasSize;
+    canvas.height = canvasSize;
     
-    // رسم خلفية متدرجة
-    const gradient = ctx.createLinearGradient(0, 0, size, size);
-    gradient.addColorStop(0, '#ffffff');
-    gradient.addColorStop(1, '#f8f9fa');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
+    // تهيئة المصفوفة
+    this.initMatrix();
     
-    // رسم إطار خارجي
+    // رسم الخلفية البيضاء
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    
+    // حساب حجم كل وحدة
+    const moduleSize = (canvasSize - 40) / this.size;
+    const startX = 20;
+    const startY = 20;
+    
+    // رسم الإطار الخارجي
     ctx.strokeStyle = '#e9ecef';
     ctx.lineWidth = 2;
-    ctx.strokeRect(5, 5, size - 10, size - 10);
+    ctx.strokeRect(10, 10, canvasSize - 20, canvasSize - 20);
     
-    // رسم نمط QR متطور
-    ctx.fillStyle = '#000000';
-    const moduleSize = (size - 20) / 29;
+    // رسم أنماط المحاذاة (الزوايا الثلاث)
+    this.drawFinderPattern(ctx, startX, startY, moduleSize);
+    this.drawFinderPattern(ctx, startX + (this.size - 7) * moduleSize, startY, moduleSize);
+    this.drawFinderPattern(ctx, startX, startY + (this.size - 7) * moduleSize, moduleSize);
     
-    // رسم الزوايا الثلاث بتصميم متطور
-    this.drawAdvancedFinderPattern(ctx, 10, 10, moduleSize);
-    this.drawAdvancedFinderPattern(ctx, size - 10 - 7 * moduleSize, 10, moduleSize);
-    this.drawAdvancedFinderPattern(ctx, 10, size - 10 - 7 * moduleSize, moduleSize);
+    // رسم خطوط التوقيت
+    this.drawTimingPatterns(ctx, startX, startY, moduleSize);
     
-    // رسم نمط البيانات المتطور
-    for (let i = 0; i < 29; i++) {
-      for (let j = 0; j < 29; j++) {
-        if (this.shouldFillAdvancedModule(i, j, text)) {
-          this.drawModule(ctx, 10 + i * moduleSize, 10 + j * moduleSize, moduleSize);
-        }
-      }
-    }
+    // رسم البيانات (نمط مبسط)
+    this.drawDataPattern(ctx, startX, startY, moduleSize, text);
     
-    // رسم لوجو متطور في الوسط
-    this.drawAdvancedLogo(ctx, size);
+    // رسم اللوجو في المنتصف
+    this.drawCenterLogo(ctx, canvasSize);
     
     // إضافة تأثيرات بصرية
-    this.addVisualEffects(ctx, size);
+    this.addGlossEffect(ctx, canvasSize);
   }
   
-  drawAdvancedFinderPattern(ctx, x, y, moduleSize) {
-    // رسم المربع الخارجي بتدرج
+  initMatrix() {
+    this.modules = [];
+    this.reserved = [];
+    for (let i = 0; i < this.size; i++) {
+      this.modules[i] = [];
+      this.reserved[i] = [];
+      for (let j = 0; j < this.size; j++) {
+        this.modules[i][j] = false;
+        this.reserved[i][j] = false;
+      }
+    }
+  }
+  
+  drawFinderPattern(ctx, x, y, moduleSize) {
+    // رسم المربع الخارجي (7x7)
     const gradient = ctx.createLinearGradient(x, y, x + 7 * moduleSize, y + 7 * moduleSize);
-    gradient.addColorStop(0, '#667eea');
-    gradient.addColorStop(1, '#764ba2');
+    gradient.addColorStop(0, '#2c3e50');
+    gradient.addColorStop(1, '#34495e');
     ctx.fillStyle = gradient;
     ctx.fillRect(x, y, 7 * moduleSize, 7 * moduleSize);
     
-    // رسم المربع الداخلي
+    // المربع الأبيض الداخلي (5x5)
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(x + moduleSize, y + moduleSize, 5 * moduleSize, 5 * moduleSize);
     
-    // رسم النقطة المركزية
+    // المربع الأسود المركزي (3x3)
     ctx.fillStyle = '#000000';
-    ctx.fillRect(x + 2.5 * moduleSize, y + 2.5 * moduleSize, 2 * moduleSize, 2 * moduleSize);
+    ctx.fillRect(x + 2 * moduleSize, y + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
+    
+    // تحديد المناطق المحجوزة
+    for (let i = 0; i < 9; i++) {
+      for (let j = 0; j < 9; j++) {
+        const row = Math.floor((y - 20) / moduleSize) + i - 1;
+        const col = Math.floor((x - 20) / moduleSize) + j - 1;
+        if (row >= 0 && row < this.size && col >= 0 && col < this.size) {
+          this.reserved[row][col] = true;
+        }
+      }
+    }
   }
   
-  drawModule(ctx, x, y, size) {
-    // رسم وحدات بأشكال مختلفة
-    const random = Math.random();
+  drawTimingPatterns(ctx, startX, startY, moduleSize) {
     ctx.fillStyle = '#000000';
     
-    if (random < 0.7) {
-      // مربع عادي
-      ctx.fillRect(x, y, size, size);
-    } else if (random < 0.85) {
-      // دائرة
-      ctx.beginPath();
-      ctx.arc(x + size/2, y + size/2, size/2, 0, 2 * Math.PI);
-      ctx.fill();
-    } else {
-      // معين
-      ctx.beginPath();
-      ctx.moveTo(x + size/2, y);
-      ctx.lineTo(x + size, y + size/2);
-      ctx.lineTo(x + size/2, y + size);
-      ctx.lineTo(x, y + size/2);
-      ctx.closePath();
-      ctx.fill();
+    // خط أفقي
+    for (let i = 8; i < this.size - 8; i++) {
+      if (i % 2 === 0) {
+        ctx.fillRect(startX + i * moduleSize, startY + 6 * moduleSize, moduleSize, moduleSize);
+        this.reserved[6][i] = true;
+      }
+    }
+    
+    // خط عمودي
+    for (let i = 8; i < this.size - 8; i++) {
+      if (i % 2 === 0) {
+        ctx.fillRect(startX + 6 * moduleSize, startY + i * moduleSize, moduleSize, moduleSize);
+        this.reserved[i][6] = true;
+      }
     }
   }
   
-  shouldFillAdvancedModule(x, y, text) {
-    // تجنب الزوايا والمساحات المحجوزة
-    if ((x < 9 && y < 9) || (x > 19 && y < 9) || (x < 9 && y > 19)) {
-      return false;
-    }
+  drawDataPattern(ctx, startX, startY, moduleSize, text) {
+    ctx.fillStyle = '#000000';
     
-    // تجنب منطقة اللوجو
-    if (x > 11 && x < 17 && y > 11 && y < 17) {
-      return false;
-    }
+    // تحويل النص إلى hash للنمط
+    const hash = this.createHash(text);
     
-    // نمط متطور بناءً على النص والموقع
-    const hash = this.advancedHash(text + x + y);
-    return (hash % 3 === 0) && ((x + y) % 2 === 0);
+    for (let row = 0; row < this.size; row++) {
+      for (let col = 0; col < this.size; col++) {
+        if (!this.reserved[row][col]) {
+          // تجنب منطقة اللوجو المركزية
+          if (row >= 8 && row <= 12 && col >= 8 && col <= 12) {
+            continue;
+          }
+          
+          // إنشاء نمط بناءً على الموقع والنص
+          const shouldFill = this.shouldFillModule(row, col, hash);
+          if (shouldFill) {
+            this.drawSingleModule(ctx, startX + col * moduleSize, startY + row * moduleSize, moduleSize);
+          }
+        }
+      }
+    }
   }
   
-  advancedHash(str) {
+  createHash(text) {
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash;
     }
     return Math.abs(hash);
   }
   
-  drawAdvancedLogo(ctx, size) {
-    const logoSize = size * 0.2;
-    const centerX = size / 2;
-    const centerY = size / 2;
+  shouldFillModule(row, col, hash) {
+    // خوارزمية لتحديد الوحدات المملوءة
+    const pattern1 = (row + col + hash) % 3 === 0;
+    const pattern2 = ((row * col) + hash) % 5 === 0;
+    const pattern3 = (row % 2 === 0) && (col % 3 === 0);
     
-    // رسم خلفية اللوجو
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, logoSize/2);
-    gradient.addColorStop(0, '#ffffff');
-    gradient.addColorStop(0.7, '#f8f9fa');
-    gradient.addColorStop(1, '#e9ecef');
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, logoSize/2 + 5, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // رسم إطار اللوجو
-    ctx.strokeStyle = '#667eea';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-    
-    // رسم النص
-    const textGradient = ctx.createLinearGradient(centerX - logoSize/2, centerY - logoSize/2, centerX + logoSize/2, centerY + logoSize/2);
-    textGradient.addColorStop(0, '#667eea');
-    textGradient.addColorStop(1, '#764ba2');
-    ctx.fillStyle = textGradient;
-    ctx.font = `bold ${logoSize/2.5}px Arial`;
-    ctx.textAlign = 'center';
-    ctx.fillText('م.ح', centerX, centerY + logoSize/8);
+    return pattern1 || pattern2 || (pattern3 && hash % 7 === 0);
   }
   
-  addVisualEffects(ctx, size) {
-    // إضافة تأثير لمعان
-    const shimmer = ctx.createLinearGradient(0, 0, size, 0);
-    shimmer.addColorStop(0, 'rgba(255, 255, 255, 0)');
-    shimmer.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
-    shimmer.addColorStop(1, 'rgba(255, 255, 255, 0)');
-    ctx.fillStyle = shimmer;
-    ctx.fillRect(0, 0, size, size);
+  drawSingleModule(ctx, x, y, size) {
+    // رسم وحدات بأشكال متنوعة
+    const random = Math.random();
+    
+    if (random < 0.8) {
+      // مربع عادي
+      ctx.fillRect(x, y, size, size);
+    } else {
+      // دائرة صغيرة
+      ctx.beginPath();
+      ctx.arc(x + size/2, y + size/2, size/2.5, 0, 2 * Math.PI);
+      ctx.fill();
+    }
+  }
+  
+  drawCenterLogo(ctx, canvasSize) {
+    const centerX = canvasSize / 2;
+    const centerY = canvasSize / 2;
+    const logoSize = canvasSize * 0.15;
+    
+    // خلفية بيضاء مع إطار
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, logoSize/2 + 8, 0, 2 * Math.PI);
+    ctx.fill();
+    
+    // إطار ملون
+    const gradient = ctx.createLinearGradient(centerX - logoSize/2, centerY - logoSize/2, centerX + logoSize/2, centerY + logoSize/2);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(0.5, '#764ba2');
+    gradient.addColorStop(1, '#f093fb');
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    
+    // النص المركزي
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = `bold ${logoSize/2.2}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('م.ح', centerX, centerY);
+    
+    // إضافة نجمة صغيرة
+    ctx.fillStyle = '#f39c12';
+    ctx.beginPath();
+    ctx.arc(centerX + logoSize/3, centerY - logoSize/3, 3, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  
+  addGlossEffect(ctx, canvasSize) {
+    // تأثير لمعان قطري
+    const gradient = ctx.createLinearGradient(0, 0, canvasSize/2, canvasSize/2);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
+    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.05)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
   }
 }
 
-// إنشاء مولد QR متطور
-const qrGenerator = new AdvancedQR();
+// إنشاء مولد QR محلي
+const qrGenerator = new LocalQRGenerator();
 
 // توليد vCard متطور
 function generateAdvancedVCard() {
@@ -1178,6 +1260,22 @@ function sendWhatsApp() {
   const message = encodeURIComponent(`السلام عليكم، وصلني الكارت الشخصي الخاص بك`);
   window.open(`https://wa.me/${userData.whatsapp}?text=${message}`, '_blank');
   showAdvancedNotification('تم فتح واتساب', 'success');
+  stats.contacts++;
+  updateStats();
+}
+
+// فيس بوك
+function openFacebook() {
+  window.open(`https://facebook.com/${userData.facebook}`, '_blank');
+  showAdvancedNotification('تم فتح فيس بوك', 'success');
+  stats.contacts++;
+  updateStats();
+}
+
+// إنستجرام
+function openInstagram() {
+  window.open(`https://instagram.com/${userData.instagram}`, '_blank');
+  showAdvancedNotification('تم فتح إنستجرام', 'success');
   stats.contacts++;
   updateStats();
 }
